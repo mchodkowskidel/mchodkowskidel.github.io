@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Progi ocen</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f7; }
+    h1 { text-align: center; }
+    .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    input, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+    .buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    button { background: #007BFF; color: white; font-weight: bold; cursor: pointer; }
+    button.off { background: #6c757d; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    th { background: #eaeaea; }
+    @media (max-width: 600px) {
+      .buttons { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Progi ocen</h1>
+
+    <label>Maksymalna liczba punktów:</label>
+    <input type="text" id="maxPoints" placeholder="Wpisz liczbę">
+
+    <div class="buttons">
+      <button id="toggleRound" class="off">Zaokrąglij: WYŁ</button>
+      <button id="togglePercent" class="off">Pokaż procenty: WYŁ</button>
+    </div>
+
+    <table>
+      <thead id="gradeTableHead"></thead>
+      <tbody id="gradeTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const gradeRanges = [
+      { grade: "1", low: 0, high: 39 },
+      { grade: "2", low: 40, high: 59 },
+      { grade: "3", low: 60, high: 77 },
+      { grade: "4", low: 78, high: 92 },
+      { grade: "5", low: 93, high: 99 },
+      { grade: "6", low: 100, high: 100 },
+    ];
+
+    const maxInput = document.getElementById('maxPoints');
+    const tableBody = document.getElementById('gradeTable');
+    const tableHead = document.getElementById('gradeTableHead');
+
+    const btnRound = document.getElementById('toggleRound');
+    const btnPercent = document.getElementById('togglePercent');
+
+    let roundValues = false;
+    let showPercent = false;
+
+    function updateButton(btn, state, label) {
+      if (state) {
+        btn.classList.remove("off");
+        btn.innerText = label + ": WŁ";
+      } else {
+        btn.classList.add("off");
+        btn.innerText = label + ": WYŁ";
+      }
+    }
+
+    function buildHeader() {
+      if (showPercent) {
+        tableHead.innerHTML = `<tr><th>Ocena</th><th>Procent</th><th>Zakres punktów</th></tr>`;
+      } else {
+        tableHead.innerHTML = `<tr><th>Ocena</th><th>Zakres punktów</th></tr>`;
+      }
+    }
+
+    function formatNumber(v) {
+      return roundValues ? String(Math.round(v)) : v.toFixed(1);
+    }
+
+    function calculate() {
+      const maxPoints = Number(maxInput.value.replace(",", "."));
+      buildHeader();
+
+      if (!maxPoints || maxPoints <= 0) {
+        tableBody.innerHTML = "<tr><td colspan='3'>Podaj maksymalną liczbę punktów</td></tr>";
+        return;
+      }
+
+      tableBody.innerHTML = "";
+
+      gradeRanges.forEach(g => {
+        const minPct = g.low;
+        const maxPct = g.high;
+        const minPoints = (minPct/100) * maxPoints;
+        const maxPointsRange = (maxPct/100) * maxPoints;
+
+        const displayMin = formatNumber(minPoints);
+        const displayMax = formatNumber(maxPointsRange);
+
+        let row = "";
+        if (showPercent) {
+          row = `<tr><td>${g.grade}</td><td>${minPct}% - ${maxPct}%</td><td>${displayMin} – ${displayMax}</td></tr>`;
+        } else {
+          row = `<tr><td>${g.grade}</td><td>${displayMin} – ${displayMax}</td></tr>`;
+        }
+        tableBody.innerHTML += row;
+      });
+    }
+
+    // obsługa przycisków
+    btnRound.addEventListener("click", () => {
+      roundValues = !roundValues;
+      updateButton(btnRound, roundValues, "Zaokrąglij");
+      calculate();
+    });
+
+    btnPercent.addEventListener("click", () => {
+      showPercent = !showPercent;
+      updateButton(btnPercent, showPercent, "Pokaż procenty");
+      calculate();
+    });
+
+    // obsługa wpisywania (różne eventy dla Safari i Chrome)
+    ["input", "keyup", "change"].forEach(ev => {
+      maxInput.addEventListener(ev, calculate);
+    });
+
+    // inicjalizacja
+    updateButton(btnRound, roundValues, "Zaokrąglij");
+    updateButton(btnPercent, showPercent, "Pokaż procenty");
+    calculate();
+  </script>
+</body>
+</html>
